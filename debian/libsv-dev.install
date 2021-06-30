@@ -1,0 +1,4 @@
+usr/include/semver.h
+usr/lib/*/libsv.so
+usr/lib/*/libsv.a
+usr/lib/*/pkgconfig/libsv.pc

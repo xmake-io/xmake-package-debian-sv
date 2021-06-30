@@ -1,0 +1,3 @@
+Tests: unittest.sh
+Depends: @builddeps@
+Restrictions: allow-stderr
