@@ -1,3 +1,10 @@
+libsv (1.0-2) unstable; urgency=medium
+
+  * Fix FTBFS on archs where char is unsigned
+  * Bump Standards-Version to 4.6.0
+
+ -- Yangfl <mmyangfl@gmail.com>  Sun, 07 Nov 2021 05:58:17 +0800
+
 libsv (1.0-1) unstable; urgency=medium
 
   * Initial release
