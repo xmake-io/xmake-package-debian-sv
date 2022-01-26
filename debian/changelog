@@ -1,0 +1,5 @@
+xmake-core-sv (1.0~git20211108.0352627-1) unstable; urgency=medium
+
+  * the first version uploading to debian.
+
+ -- zhao zhen <zhaozhen@uniontech.com>  Wed, 26 Jan 2022 21:28:36 +0800

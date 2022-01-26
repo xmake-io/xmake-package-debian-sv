@@ -1,0 +1,20 @@
+Source: xmake-core-sv
+Section: Development
+Priority: optional
+Maintainer: zhaozhen <zhaozhen@uniontech.com> ruki <waruqi@gmail.com>
+Build-Depends:  debhelper-compat (= 13),
+                cmake,
+                build-essential
+Standards-Version: 4.5.0
+Homepage: https://github.com/xmake-io/xmake-core-sv
+#Vcs-Browser: https://salsa.debian.org/debian/xmake-core-sv
+#Vcs-Git: https://salsa.debian.org/debian/xmake-core-sv.git
+Rules-Requires-Root: no
+
+Package: libsv
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Public domain cross-platform semantic versioning in c99
+ This is free and unencumbered software released into the public domain.
+ This package installs a C language library implementing semantic 
+ versioning for the C language.
