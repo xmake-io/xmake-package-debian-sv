@@ -1,3 +1,9 @@
+libsv (1.1-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Yangfl <mmyangfl@gmail.com>  Wed, 09 Mar 2022 16:11:15 +0800
+
 libsv (1.0-2) unstable; urgency=medium
 
   * Fix FTBFS on archs where char is unsigned
