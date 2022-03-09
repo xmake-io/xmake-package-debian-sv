@@ -102,8 +102,8 @@ static char parse_partial(semver_t *self, const char *str, size_t len, size_t *o
     if (semver_num_read(&self->patch, str, len, offset)) {
       return 1;
     }
-    if ((str[*offset] == '-' && semver_id_read(&self->prerelease, str, len, (++*offset, offset)))
-      || (str[*offset] == '+' && semver_id_read(&self->build, str, len, (++*offset, offset)))) {
+    if ((str[*offset] == '-' && semver_id_read_prerelease(&self->prerelease, str, len, (++*offset, offset)))
+      || (str[*offset] == '+' && semver_id_read_build(&self->build, str, len, (++*offset, offset)))) {
       return 1;
     }
     self->len = str + *offset - self->raw;
@@ -139,7 +139,7 @@ static char parse_hiphen(semver_comp_t *self, const char *str, size_t len, size_
   return 0;
 }
 
-static char parse_tidle(semver_comp_t *self, const char *str, size_t len, size_t *offset) {
+static char parse_caret(semver_comp_t *self, const char *str, size_t len, size_t *offset) {
   semver_t partial;
 
   if (parse_partial(&self->version, str, len, offset)) {
@@ -167,7 +167,7 @@ static char parse_tidle(semver_comp_t *self, const char *str, size_t len, size_t
   return 0;
 }
 
-static char parse_caret(semver_comp_t *self, const char *str, size_t len, size_t *offset) {
+static char parse_tilde(semver_comp_t *self, const char *str, size_t len, size_t *offset) {
   semver_t partial;
 
   if (parse_partial(&self->version, str, len, offset)) {
@@ -230,14 +230,14 @@ char semver_comp_read(semver_comp_t *self, const char *str, size_t len, size_t *
     switch (str[*offset]) {
       case '^':
         ++*offset;
-        if (parse_tidle(self, str, len, offset)) {
+        if (parse_caret(self, str, len, offset)) {
           return 1;
         }
         self = self->next;
         goto next;
       case '~':
         ++*offset;
-        if (parse_caret(self, str, len, offset)) {
+        if (parse_tilde(self, str, len, offset)) {
           return 1;
         }
         self = self->next;
@@ -300,7 +300,7 @@ char semver_comp_read(semver_comp_t *self, const char *str, size_t len, size_t *
   }
   next:
   if (*offset < len && str[*offset] == ' '
-    && *offset < len + 1 && str[*offset + 1] != ' ' && str[*offset + 1] != '|') {
+    && *offset + 1 < len && str[*offset + 1] != ' ' && str[*offset + 1] != '|') {
     ++*offset;
     if (*offset < len) {
       self->next = (semver_comp_t *) sv_malloc(sizeof(semver_comp_t));
@@ -339,7 +339,7 @@ char semver_and(semver_comp_t *left, const char *str, size_t len) {
 }
 
 bool semver_comp_pmatch(const semver_t *self, const semver_comp_t *comp) {
-  char result = semver_pcmp(self, &comp->version);
+  int result = semver_pcmp(self, &comp->version);
 
   if (result < 0 && comp->op != SEMVER_OP_LT && comp->op != SEMVER_OP_LE) {
     return false;
@@ -369,10 +369,11 @@ bool semver_comp_matchn(const semver_t *self, const char *comp_str, size_t comp_
 }
 
 int semver_comp_pwrite(const semver_comp_t *self, char *buffer, size_t len) {
-  char semver[SV_COMP_MAX_LEN], next[SV_COMP_MAX_LEN];
+  char semver[SV_COMP_MAX_LEN];
 
   semver_write(self->version, semver, SV_COMP_MAX_LEN);
   if (self->next) {
+    char next[SV_COMP_MAX_LEN];
     return snprintf(buffer, len, "%s%s %.*s",
       semver_op_string(self->op), semver, semver_comp_pwrite(self->next, next, SV_COMP_MAX_LEN), next
     );

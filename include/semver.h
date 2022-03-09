@@ -61,17 +61,35 @@
 # endif
 #endif
 
-#if !defined(__cplusplus) && defined(_MSC_VER) && _MSC_VER < 1900
-# define bool	unsigned char
-# define true	1
-# define false	0
-# define __bool_true_false_are_defined	1
-#else
-# ifdef __cplusplus
-#  include <cstdbool>
+#ifndef __cplusplus
+# if defined(_MSC_VER) && _MSC_VER < 1900
+#   define bool	unsigned char
+#   define true	1
+#   define false	0
+#   define __bool_true_false_are_defined	1
 # else
-#  include <stdbool.h>
+#   include <stdbool.h>
 # endif
+#endif
+
+#if defined(_MSC_VER)
+typedef __int8 int8_t;
+typedef __int16 int16_t;
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+typedef unsigned __int8 uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+#ifdef _WIN64
+typedef __int64 intptr_t;
+typedef unsigned __int64 uintptr_t;
+#else
+typedef __int32 intptr_t;
+typedef unsigned __int32 uintptr_t;
+#endif
+#else
+#   include <stdint.h>
 #endif
 
 #ifndef sv_malloc
@@ -100,6 +118,7 @@ typedef struct semver semver_t;
 typedef struct semver_id semver_id_t;
 typedef struct semver_comp semver_comp_t;
 typedef struct semver_range semver_range_t;
+typedef struct semvers semvers_t;
 
 enum semver_op {
   SEMVER_OP_EQ = 0,
@@ -125,10 +144,11 @@ struct semver {
 };
 
 SV_API char semvern(semver_t *self, const char *str, size_t len);
+SV_API char semver_tryn(semver_t *self, const char *str, size_t len);
 SV_API void semver_dtor(semver_t *self);
 SV_API int  semver_pwrite(const semver_t *self, char *buffer, size_t len);
 SV_API size_t semver_fwrite (const semver_t *self, FILE * stream);
-SV_API char semver_pcmp(const semver_t *self, const semver_t *other);
+SV_API int semver_pcmp(const semver_t *self, const semver_t *other);
 SV_API bool semver_comp_pmatch(const semver_t *self, const semver_comp_t *comp);
 SV_API bool semver_comp_matchn(const semver_t *self, const char *comp_str, size_t comp_len);
 SV_API bool semver_range_pmatch(const semver_t *self, const semver_range_t *range);
@@ -156,5 +176,62 @@ SV_API void semver_range_dtor(semver_range_t *self);
 SV_API int  semver_range_pwrite(const semver_range_t *self, char *buffer, size_t len);
 SV_API size_t semver_range_fwrite (const semver_range_t *rangep, FILE *stream);
 SV_API char semver_or(semver_range_t *left, const char *str, size_t len);
+
+struct semvers {
+  uint32_t length, capacity;
+  semver_t *data;
+};
+
+SV_API uint32_t semvers_pgrowth(semvers_t *self, int32_t nmin);
+SV_API semver_t semvers_perase(semvers_t *self, uint32_t i);
+SV_API void semvers_psort(semvers_t *self);
+SV_API void semvers_prsort(semvers_t *self);
+SV_API void semvers_pdtor(semvers_t *self);
+SV_API void semvers_pclear(semvers_t *self);
+
+#define semvers_dtor(s) \
+  semvers_pdtor(&(s))
+
+#define semvers_clear(s) \
+  semvers_pclear(&(s))
+
+#define semvers_growth(s, n) \
+  semvers_pgrowth(&(s),n)
+
+#define semvers_pgrow(s, n) \
+  semvers_pgrowth((s),(s)->length+(n))
+
+#define semvers_grow(s, n) \
+  semvers_pgrow(&(s), n)
+
+#define semvers_resize(s, n) \
+  ((s).length=semvers_growth(s, n))
+
+#define semvers_erase(s, i) \
+  semvers_perase(&(s), i)
+
+#define semvers_ppush(s, x) \
+  (semvers_pgrow(s,1),(s)->data[(s)->length++]=(x))
+
+#define semvers_push(s, x) \
+  semvers_ppush(&(s), x)
+
+#define semvers_ppop(s) \
+  (s)->data[--(s)->length]
+
+#define semvers_pop(s) \
+  semvers_ppop(&(s))
+
+#define semvers_unshift(s, x) \
+  (semvers_grow(s,1),memmove((s).data+1,(s).data,(s).length++*sizeof(semver_t)),(s).data[0]=(x))
+
+#define semvers_shift(s) \
+  semvers_erase(s, 0)
+
+#define semvers_sort(s) \
+  semvers_psort(&(s))
+
+#define semvers_rsort(s) \
+  semvers_prsort(&(s))
 
 #endif /* SV_H__ */

@@ -25,19 +25,11 @@
  * For more information, please refer to <http://unlicense.org>
  */
 
-#ifndef SV_ID_H__
-# define SV_ID_H__
+#ifndef SV_SEMVERS_H__
+# define SV_SEMVERS_H__
 
-#include "version.h"
+#include "semver.h"
 
-void semver_id_ctor(semver_id_t *self);
-void semver_id_dtor(semver_id_t *self);
-char semver_id_read_prerelease(semver_id_t *self, const char *str, size_t len, size_t *offset);
-char semver_id_read_build(semver_id_t *self, const char *str, size_t len, size_t *offset);
-int  semver_id_pwrite(const semver_id_t *self, char *buffer, size_t len);
-int semver_id_pcmp(const semver_id_t *self, const semver_id_t *other);
+#define SEMVERS_MIN_CAP (4)
 
-#define semver_id_write(self, buffer, len) semver_id_pwrite(&(self), buffer, len)
-#define semver_id_comp(self, other) semver_id_pcmp(&(self), &(other))
-
-#endif /* SV_ID_H__ */
+#endif /* SV_SEMVERS_H__ */
