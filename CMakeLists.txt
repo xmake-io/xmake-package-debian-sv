@@ -1,13 +1,14 @@
 include(CMakeParseArguments)
 
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
-cmake_policy(SET CMP0054 OLD)
-cmake_policy(SET CMP0045 OLD)
+project(sv C)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 if (NOT EXISTS ${CMAKE_CURRENT_LIST_DIR}/cmake/properties.cmake)
   message(FATAL_ERROR "cmake/properties.cmake file should exists.")
 endif ()
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/properties.cmake)
+
+include(GNUInstallDirs) # include this *AFTER* PROJECT(), otherwise paths are wrong.
 
 get_directory_property(${PROJECT_NAME}_PARENT PARENT_DIRECTORY)
 if (NOT ${PROJECT_NAME}_PARENT)
@@ -27,7 +28,7 @@ if (NOT COMMAND project_dependency)
       set(DL_ARGS_BUILD_DIR "${CMAKE_BINARY_DIR}/vendor/${DEP}")
       set(DL_ARGS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/vendor/${DEP}")
       file(WRITE "${DL_ARGS_BUILD_DIR}/CMakeLists.txt"
-        "cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)\n"
+        "cmake_minimum_required(VERSION 3.5 FATAL_ERROR)\n"
         "project(vendor-${DEP} NONE)\n"
         "include(ExternalProject)\n"
         "ExternalProject_Add(vendor-${DEP}\n"
@@ -65,14 +66,9 @@ elseif (NOT MSVC)
   message(FATAL_ERROR "Unknown compiler")
 endif ()
 
-if (CMAKE_VERSION VERSION_LESS "3.1")
-  if (GCC)
-    set(CMAKE_C_FLAGS "-std=c99 ${CMAKE_C_FLAGS}")
-  endif ()
-else ()
-  set(CMAKE_C_STANDARD 99)
-endif ()
+set(CMAKE_C_STANDARD 99)
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(COVERAGE "Turn on COVERAGE support" OFF)
 if (COVERAGE AND NOT MSVC)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} --coverage")
@@ -92,8 +88,10 @@ if (EXISTS ${${PROJECT_NAME}_SOURCE_DIR})
   file(GLOB_RECURSE ${PROJECT_NAME}_SOURCES ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_SOURCE_DIR}/*.c)
 endif ()
 
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
+add_library(${PROJECT_NAME} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER "${${PROJECT_NAME}_HEADERS}")
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION "${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH}")
+set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${${PROJECT_NAME}_MAJOR})
 
 if (${PROJECT_NAME}_DEPS)
   foreach (DEP ${${PROJECT_NAME}_DEPS})
@@ -175,13 +173,37 @@ else ()
   set(${PROJECT_NAME}_TEST_DIR ${PROJECT_NAME}_TEST_DIR PARENT_SCOPE)
 endif ()
 
+block()
+set(prefix ${CMAKE_INSTALL_PREFIX})
+set(exec_prefix ${CMAKE_INSTALL_PREFIX})
+set(bindir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
+set(datarootdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR})
+set(includedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
+set(infodir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INFODIR})
+set(libdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+set(libexecdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBEXECDIR})
+set(localstatedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LOCALSTATEDIR})
+set(mandir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_MANDIR})
+set(sbindir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SBINDIR})
+set(sharedstatedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SHAREDSTATEDIR})
+set(sysconfdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_SYSCONFDIR})
+set(PACKAGE_NAME ${PROJECT_NAME})
+set(LIBSV_PKG_CONFIG_VERSION
+    ${${PROJECT_NAME}_MAJOR}.${${PROJECT_NAME}_MINOR}.${${PROJECT_NAME}_PATCH})
+configure_file("scripts/libsv.pc.in" "scripts/libsv.pc" @ONLY)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/scripts/libsv.pc"
+  COMPONENT Devel
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+endblock()
+
 install(TARGETS ${PROJECT_NAME}
-  RUNTIME DESTINATION bin
-  ARCHIVE DESTINATION lib
-  PUBLIC_HEADER DESTINATION include/${PROJECT_NAME})
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 if (EXISTS ${${PROJECT_NAME}_INCLUDE_DIR}/${PROJECT_NAME}.h)
   install(FILES ${${PROJECT_NAME}_INCLUDE_DIR}/${PROJECT_NAME}.h
-    DESTINATION include)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif ()
 
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_NAME}_SUMMARY")
