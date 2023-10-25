@@ -1,6 +1,9 @@
 libsv (1.2-1) unstable; urgency=medium
 
   * New upstream release
+  * d/control:
+    - Add myself as an uploader
+    - Update standards version to 4.6.2
 
  -- Lance Lin <lq27267@gmail.com>  Wed, 25 Oct 2023 20:42:51 +0700
 
