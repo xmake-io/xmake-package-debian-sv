@@ -8,8 +8,8 @@ Build-Depends:
 Rules-Requires-Root: no
 Standards-Version: 4.6.2
 Homepage: https://github.com/uael/sv
-Vcs-Git: https://salsa.debian.org/yangfl-guest/sv.git
-Vcs-Browser: https://salsa.debian.org/yangfl-guest/sv
+Vcs-Git: https://salsa.debian.org/xmake-team/sv.git
+Vcs-Browser: https://salsa.debian.org/xmake-team/sv
 
 Package: libsv-dev
 Section: libdevel
